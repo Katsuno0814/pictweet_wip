@@ -1,0 +1,40 @@
+（省略）
+
+@Controller
+@AllArgsConstructor
+public class TweetController {
+
+  （省略）
+  
+  @PostMapping("/tweets/{tweetId}/update")
+  public String updateTweet(@ModelAttribute("tweetForm") @Validated TweetForm tweetForm,
+                            BindingResult result,
+                            @PathVariable("tweetId") Integer tweetId,
+                            Model model) {
+
+    if (result.hasErrors()) {
+      List<String> errorMessages = result.getAllErrors().stream()
+              .map(DefaultMessageSourceResolvable::getDefaultMessage)
+              .collect(Collectors.toList());
+      model.addAttribute("errorMessages", errorMessages);
+
+      model.addAttribute("tweetForm", tweetForm);
+      model.addAttribute("tweetId", tweetId);
+      return "tweets/edit";
+    }
+
+    TweetEntity tweet = tweetRepository.findById(tweetId);
+    tweet.setName(tweetForm.getName());
+    tweet.setText(tweetForm.getText());
+    tweet.setImage(tweetForm.getImage());
+
+    try {
+      tweetRepository.update(tweet);
+    } catch (Exception e) {
+      System.out.println("エラー：" + e);
+      return "redirect:/";
+    }
+
+    return "redirect:/";
+  }
+}

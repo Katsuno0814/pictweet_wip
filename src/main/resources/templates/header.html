@@ -1,0 +1,17 @@
+<header xmlns:th="http://www.thymeleaf.org" th:fragment="header" class="header">
+  <div class="header__bar row">
+    <h1 class="grid-6"><a th:href="@{/}">PicTweet</a></h1>
+
+    <div class="user_nav grid-6" th:if="${#authorization.expression('isAuthenticated()')}">
+      <form th:action="@{/logout}" method="post" style="display:inline-block">
+        <input class="logout-btn" type="submit" value="ログアウト"/>
+      </form>
+      <a class="post" th:href="@{/tweets/new}">投稿する</a>
+    </div>
+
+    <div class="grid-6" th:if="${#authorization.expression('!isAuthenticated()')}">
+      <a class="post" th:href="@{/users/sign_up}">新規登録</a>
+      <a class="post" th:href="@{/users/login}">ログイン</a>
+    </div>
+  </div>
+</header>
