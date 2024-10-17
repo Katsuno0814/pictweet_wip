@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.form.TweetForm;
+import in.tech_camp.pictweet.form.CommentForm;
+import in.tech_camp.pictweet.form.SearchForm;
 import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
 import in.tech_camp.pictweet.validation.ValidationOrder;
@@ -32,7 +34,9 @@ public class TweetController {
   @GetMapping("/")
   public String showIndex(Model model) {
         List<TweetEntity> tweets = tweetRepository.findAll();
+        SearchForm searchForm = new SearchForm();
         model.addAttribute("tweets", tweets);
+        model.addAttribute("searchForm", searchForm);
         return "tweets/index";
   }
 
@@ -130,7 +134,18 @@ public class TweetController {
   @GetMapping("/tweets/{tweetId}")
   public String showTweetDetail(@PathVariable("tweetId") Integer tweetId, Model model) {
       TweetEntity tweet = tweetRepository.findById(tweetId);
+      CommentForm commentForm = new CommentForm();
       model.addAttribute("tweet", tweet);
+      model.addAttribute("commentForm", commentForm);
+      model.addAttribute("comments",tweet.getComments());
       return "tweets/detail";
+  }
+
+  @GetMapping("/tweets/search")
+  public String searchTweets(@ModelAttribute("searchForm") SearchForm searchForm, Model model) {
+    List<TweetEntity> tweets = tweetRepository.findByTextContaining(searchForm.getText());
+    model.addAttribute("tweets", tweets);
+    model.addAttribute("searchForm", searchForm);
+    return "tweets/search";
   }
 }

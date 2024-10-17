@@ -8,7 +8,7 @@
 
 <body>
 
-<div th:insert="~{header :: header}"></div>
+  <div th:insert="~{header :: header}"></div>
 
 <form th:action="@{/tweets/search}" method="get" th:object="${searchForm}" class="search-form">
   <input type="text" th:field="*{text}" name="text" placeholder="投稿を検索する" class="search-input" />

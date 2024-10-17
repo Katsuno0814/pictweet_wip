@@ -24,7 +24,9 @@ public interface UserRepository {
   @Results(value = {
     @Result(property = "id", column = "id"), 
     @Result(property = "tweets", column = "id", 
-            many = @Many(select = "in.tech_camp.pictweet.repository.TweetRepository.findByUserId"))
+            many = @Many(select = "in.tech_camp.pictweet.repository.TweetRepository.findByUserId")),
+    @Result(property = "comments", column = "id", 
+            many = @Many(select = "in.tech_camp.pictweet.repository.CommentRepository.findByUserId"))
   })
   UserEntity findById(Integer id);
 }
