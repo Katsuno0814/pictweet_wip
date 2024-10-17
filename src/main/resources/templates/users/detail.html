@@ -5,16 +5,18 @@
   <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css">
   <title>PicTweet</title>
 </head>
-<body>
 
+<body>
 <div th:insert="~{header :: header}"></div>
 
 <div class="contents row">
-  <div class="container">
-    <h3>編集する</h3>
-    <div th:replace="~{tweets/form :: form(actionUrl=@{/tweets/{tweetId}/update(tweetId=${tweetId})}, tweetForm=${tweetForm}, errorMessages=${errorMessages})}"></div>
-  </div>
+  <p th:text="${nickname} + 'さんの投稿一覧'"></p>
+
+  <div th:each="tweet : ${tweets}">
+    <div th:replace="~{tweets/tweet :: content(tweet=${tweet})}"></div>
+  </div> 
 </div>
+
 
 <div th:insert="~{footer :: footer}"></div>
 

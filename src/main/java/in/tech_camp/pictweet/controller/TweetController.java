@@ -18,6 +18,7 @@ import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.repository.TweetRepository;
+import in.tech_camp.pictweet.repository.UserRepository;
 import in.tech_camp.pictweet.validation.ValidationOrder;
 import lombok.AllArgsConstructor;
 
@@ -25,6 +26,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TweetController {
   private final TweetRepository tweetRepository;
+
+  private final UserRepository userRepository;
 
   @GetMapping("/")
   public String showIndex(Model model) {
@@ -55,8 +58,7 @@ public class TweetController {
     }
 
     TweetEntity tweet = new TweetEntity();
-    tweet.setUserId(currentUser.getId());
-    tweet.setName(tweetForm.getName());
+    tweet.setUser(userRepository.findById(currentUser.getId()));
     tweet.setText(tweetForm.getText());
     tweet.setImage(tweetForm.getImage());
       
@@ -86,7 +88,6 @@ public class TweetController {
     TweetEntity tweet = tweetRepository.findById(tweetId);
 
     TweetForm tweetForm = new TweetForm();
-    tweetForm.setName(tweet.getName());
     tweetForm.setText(tweet.getText());
     tweetForm.setImage(tweet.getImage());
 
@@ -113,7 +114,6 @@ public class TweetController {
     }
 
     TweetEntity tweet = tweetRepository.findById(tweetId);
-    tweet.setName(tweetForm.getName());
     tweet.setText(tweetForm.getText());
     tweet.setImage(tweetForm.getImage());
 

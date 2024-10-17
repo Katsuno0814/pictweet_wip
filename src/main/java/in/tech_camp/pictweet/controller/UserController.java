@@ -2,6 +2,7 @@ package in.tech_camp.pictweet.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -14,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 
+import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.entity.UserEntity;
 import in.tech_camp.pictweet.form.UserForm;
 import in.tech_camp.pictweet.repository.UserRepository;
@@ -80,4 +82,13 @@ public class UserController {
     return "users/login";
   }
 
+  @GetMapping("/users/{userId}")
+  public String showMypage(@PathVariable("userId") Integer userId, Model model) {
+    UserEntity user = userRepository.findById(userId);
+    List<TweetEntity> tweets = user.getTweets();
+
+    model.addAttribute("nickname", user.getNickname());
+    model.addAttribute("tweets", tweets);
+    return "users/detail";
+  }
 }

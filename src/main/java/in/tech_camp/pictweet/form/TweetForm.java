@@ -6,9 +6,7 @@ import lombok.Data;
 
 @Data
 public class TweetForm {
-
-  private String name;
-
+  
   @NotBlank(message = "Text can't be blank", groups = ValidationPriority1.class)
   private String text;
 

@@ -3,9 +3,17 @@
     <h1 class="grid-6"><a th:href="@{/}">PicTweet</a></h1>
 
     <div class="user_nav grid-6" th:if="${#authorization.expression('isAuthenticated()')}">
-      <form th:action="@{/logout}" method="post" style="display:inline-block">
-        <input class="logout-btn" type="submit" value="ログアウト"/>
-      </form>
+      <span style="display:inline-block">
+        <div th:text="${#authentication?.principal.getNickname()}"></div>
+        <ul class="user__info">
+          <li>
+            <a th:href="@{/users/{user_id}(user_id=${#authentication?.principal.getId()})}">マイページ</a>
+            <form th:action="@{/logout}" method="post">
+              <input class="logout-btn" type="submit" value="ログアウト"/>
+            </form>
+          </li>
+        </ul>
+      </span>
       <a class="post" th:href="@{/tweets/new}">投稿する</a>
     </div>
 

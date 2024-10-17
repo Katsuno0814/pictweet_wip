@@ -12,21 +12,27 @@
 
 <div class="contents row">
   <div class="content_post" th:style="'background-image: url(' + (${tweet.image}) + ');'">
-    <div class="more">
-      <span><img th:src="@{/images/arrow_top.png}" /></span>
-      <ul class="more_list">
-        <li>
-          <a th:href="@{/tweets/{tweetId}/edit(tweetId=${tweet.id})}" class="update-btn">編集</a>
-        </li>
-        <li>
-          <form th:action="@{/tweets/{tweetId}/delete(tweetId=${tweet.id})}" th:method="post">
-            <input type="submit" class="delete-btn" value="削除">
-          </form>
-        </li>
-      </ul>
+    <div th:if="${#authorization.expression('isAuthenticated()') and #authentication?.principal.getId() == tweet.user.id}">
+      <div class="more">
+        <span><img th:src="@{/images/arrow_top.png}" /></span>
+        <ul class="more_list">
+          <li>
+            <a th:href="@{/tweets/{tweetId}/edit(tweetId=${tweet.id})}" class="update-btn">編集</a>
+          </li>
+          <li>
+            <form th:action="@{/tweets/{tweetId}/delete(tweetId=${tweet.id})}" th:method="post">
+              <input type="submit" class="delete-btn" value="削除">
+            </form>
+          </li>
+        </ul>
+      </div>
     </div>
     <p th:text="${tweet.text}"></p>
-    <span class="name" th:text="${tweet.name}"></span>
+    <span class="name">
+      <a th:href="@{/users/{id}(id=${tweet.user.id})}">
+        <span>投稿者</span><span th:text="${tweet.user.nickname}"></span>
+      </a>
+    </span>
   </div>
 </div>
 
