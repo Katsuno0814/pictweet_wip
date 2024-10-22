@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +37,7 @@ import in.tech_camp.pictweet.factory.TweetFormFactory;
 import in.tech_camp.pictweet.form.UserForm;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.service.UserService;
+import static in.tech_camp.pictweet.support.LoginSupport.login;
 import in.tech_camp.pictweet.repository.TweetRepository;
 
 @ActiveProfiles("test")
@@ -101,14 +101,7 @@ public class TweetEditIntegrationTest {
     @Test
     public void ログインしたユーザーは自分が投稿したツイートの編集ができる() throws Exception {
       // ツイート1を投稿したユーザーでログインする
-      MvcResult loginResult = mockMvc.perform(post("/login")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .param("email", userForm1.getEmail())
-          .param("password", userForm1.getPassword())
-          .with(csrf()))
-          .andReturn();
-
-      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
+      MockHttpSession session = login(mockMvc, userForm1);
       assertNotNull(session);
 
       // ツイート1に「編集」へのリンクがあることを確認する
@@ -162,14 +155,7 @@ public class TweetEditIntegrationTest {
     @Test
     public void ログインしたユーザーは自分以外が投稿したツイートの編集画面には遷移できない() throws Exception {
       // ツイート1を投稿したユーザーでログインする
-      MvcResult loginResult = mockMvc.perform(post("/login")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .param("email", userForm1.getEmail())
-          .param("password", userForm1.getPassword())
-          .with(csrf()))
-          .andReturn();
-
-      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
+      MockHttpSession session = login(mockMvc, userForm1);
       assertNotNull(session);
 
       // ツイート2に「編集」へのリンクがないことを確認する
@@ -191,7 +177,7 @@ public class TweetEditIntegrationTest {
 
       // ツイート1に「編集」へのリンクがないことを確認する
       Element tweet1editMenuElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(tweet1editMenuElement); 
+      assertNull(tweet1editMenuElement);
       // ツイート2に「編集」へのリンクがないことを確認する
       Element tweet2editMenuElement = document.selectFirst("a[href='/tweets/" + tweetEntity2.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
       assertNull(tweet2editMenuElement);

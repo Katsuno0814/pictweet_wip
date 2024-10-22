@@ -37,6 +37,7 @@ import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.form.UserForm;
 import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.service.UserService;
+import static in.tech_camp.pictweet.support.LoginSupport.login;
 
 @ActiveProfiles("test")
 @SpringBootTest(classes = PictweetApplication.class)
@@ -99,14 +100,8 @@ public class TweetDeleteIntegrationTest {
     @Test
     public void ログインしたユーザーは自らが投稿したツイートの削除ができる() throws Exception {
       // ツイート1を投稿したユーザーでログインする
-      MvcResult loginResult = mockMvc.perform(post("/login")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .param("email", userForm1.getEmail())
-          .param("password", userForm1.getPassword())
-          .with(csrf()))
-          .andReturn();
+      MockHttpSession session = login(mockMvc, userForm1);
 
-      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
       assertNotNull(session);
 
       // ツイート1に「削除」へのリンクがあることを確認する
@@ -153,14 +148,7 @@ public class TweetDeleteIntegrationTest {
     @Test
     public void ログインしたユーザーは自分以外が投稿したツイートの削除ができない() throws Exception {
       // ツイート1を投稿したユーザーでログインする
-      MvcResult loginResult = mockMvc.perform(post("/login")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .param("email", userForm1.getEmail())
-          .param("password", userForm1.getPassword())
-          .with(csrf()))
-          .andReturn();
-
-      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
+      MockHttpSession session = login(mockMvc, userForm1);
       assertNotNull(session);
 
       // ツイート2に「削除」へのリンクがないことを確認する
