@@ -40,7 +40,6 @@ import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.service.UserService;
 import in.tech_camp.pictweet.repository.TweetRepository;
 
-
 @ActiveProfiles("test")
 @SpringBootTest(classes = PictweetApplication.class)
 @AutoConfigureMockMvc
@@ -101,7 +100,7 @@ public class TweetEditIntegrationTest {
   class ツイート編集ができるとき {
     @Test
     public void ログインしたユーザーは自分が投稿したツイートの編集ができる() throws Exception {
-      //1人目のユーザーでログインする
+      // ツイート1を投稿したユーザーでログインする
       MvcResult loginResult = mockMvc.perform(post("/login")
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
           .param("email", userForm1.getEmail())
@@ -112,33 +111,34 @@ public class TweetEditIntegrationTest {
       MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
       assertNotNull(session);
 
-      // ツイートに「編集」へのリンクがあることを確認する
-      MvcResult pageResult = mockMvc.perform(get("/").session(session)) // トップページを再度取得
+      // ツイート1に「編集」へのリンクがあることを確認する
+      MvcResult pageResult = mockMvc.perform(get("/").session(session))
           .andReturn();
-      String pageContent = pageResult.getResponse().getContentAsString();
-      Document document = Jsoup.parse(pageContent);
-      Element editedTweetElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNotNull(editedTweetElement); // 編集リンクが存在することを確認
-      assertEquals("編集", editedTweetElement.text());
+      String topPageContent = pageResult.getResponse().getContentAsString();
+      Document topPageDocument = Jsoup.parse(topPageContent);
+      Element editMenuElement = topPageDocument.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']");
+      assertNotNull(editMenuElement);
+      assertEquals("編集", editMenuElement.text());
 
       // 編集ページへ遷移し、すでに投稿済みの内容がフォームに入っていることを確認する
       mockMvc.perform(get("/tweets/{tweetId}/edit" ,tweetEntity1.getId()).session(session))
           .andExpect(status().isOk())
           .andExpect(view().name("tweets/edit"))
-          .andExpect(content().string(containsString(tweetForm1.getText())));
+          .andExpect(content().string(containsString(tweetEntity1.getText())))
+          .andExpect(content().string(containsString(tweetEntity1.getImage())));
 
       List<TweetEntity> tweetBeforeDeletion = tweetRepository.findAll();
       Integer initialCount = tweetBeforeDeletion.size();
 
       // 投稿内容を編集する
       mockMvc.perform(post("/tweets/{tweetId}/update" ,tweetEntity1.getId()).session(session)
-          .param("text", tweetForm1.getText() + "編集したテキスト")
-          .param("image", tweetForm1.getImage() + "編集した画像URL")
+          .param("text", tweetEntity1.getText() + "編集したテキスト")
+          .param("image", tweetEntity1.getImage() + "編集した画像URL")
           .with(csrf()))
           .andExpect(status().isFound())
           .andExpect(redirectedUrl("/"));
 
-      // tweetsテーブルのレコードの数が変わらないことの確認
+      // 編集してもtweetsテーブルのレコードの数が変わらないことを確認する
       List<TweetEntity> tweetAfterDeletion = tweetRepository.findAll();
       Integer afterCount = tweetAfterDeletion.size();
       assertEquals(initialCount, afterCount);
@@ -146,14 +146,13 @@ public class TweetEditIntegrationTest {
       // トップページには先ほど変更した内容のツイートが存在することを確認する（画像）
       MvcResult pageResultAfterEdit = mockMvc.perform(get("/"))
           .andReturn();
-
-      String contentAfterEdit = pageResultAfterEdit.getResponse().getContentAsString();
-      Document documentAfterEdit = Jsoup.parse(contentAfterEdit);
+      String pageContentAfterEdit = pageResultAfterEdit.getResponse().getContentAsString();
+      Document documentAfterEdit = Jsoup.parse(pageContentAfterEdit);
       Element divElement = documentAfterEdit.selectFirst(".content_post[style='background-image: url(" + tweetForm1.getImage() + "編集した画像URL" + ");']");
       assertNotNull(divElement);
 
       // トップページには先ほど変更した内容のツイートが存在することを確認する（テキスト）
-      mockMvc.perform(get("/")) // 再度ツイートを確認
+      mockMvc.perform(get("/"))
           .andExpect(content().string(containsString(tweetForm1.getText() + "編集したテキスト")));
     }
   }
@@ -162,46 +161,40 @@ public class TweetEditIntegrationTest {
   class ツイート編集ができないとき {
     @Test
     public void ログインしたユーザーは自分以外が投稿したツイートの編集画面には遷移できない() throws Exception {
-      //別のユーザーでログインする
+      // ツイート1を投稿したユーザーでログインする
       MvcResult loginResult = mockMvc.perform(post("/login")
-      .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-      .param("email", userForm2.getEmail())
-      .param("password", userForm2.getPassword())
-      .with(csrf()))
-      .andExpect(status().isFound())
-      .andExpect(redirectedUrl("/"))
-      .andReturn();
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .param("email", userForm1.getEmail())
+          .param("password", userForm1.getPassword())
+          .with(csrf()))
+          .andReturn();
 
       MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
       assertNotNull(session);
 
       // ツイート2に「編集」へのリンクがないことを確認する
-      MvcResult pageResult = mockMvc.perform(get("/").session(session)) // トップページを再度取得
+      MvcResult pageResult = mockMvc.perform(get("/").session(session))
           .andReturn();
       String pageContent = pageResult.getResponse().getContentAsString();
       Document document = Jsoup.parse(pageContent);
-      Element editedTweetElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(editedTweetElement); // 編集リンクが存在することを確認
+      Element editMenuElement = document.selectFirst("a[href='/tweets/" + tweetEntity2.getId() + "/edit']");
+      assertNull(editMenuElement);
     }
 
     @Test
     public void ログインしていないとツイートの編集画面には遷移できない() throws Exception {
       // ログインせずにトップページにアクセス
-      MvcResult pageResult = mockMvc.perform(get("/")) // トップページを再度取得
-          .andReturn();
-
-      // ツイート1に「編集」へのリンクがないことを確認する
+      MvcResult pageResult = mockMvc.perform(get("/"))
+        .andReturn();
       String pageContent = pageResult.getResponse().getContentAsString();
       Document document = Jsoup.parse(pageContent);
 
-      Element Tweet1Element = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(Tweet1Element); // 編集リンクが存在することを確認
-
+      // ツイート1に「編集」へのリンクがないことを確認する
+      Element tweet1editMenuElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
+      assertNull(tweet1editMenuElement); 
       // ツイート2に「編集」へのリンクがないことを確認する
-      Element Tweet2Element = document.selectFirst("a[href='/tweets/" + tweetEntity2.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(Tweet2Element); // 編集リンクが存在することを確認
-
+      Element tweet2editMenuElement = document.selectFirst("a[href='/tweets/" + tweetEntity2.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
+      assertNull(tweet2editMenuElement);
     }
   }
-
 }

@@ -7,6 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -16,7 +17,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -40,12 +40,11 @@ import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.service.UserService;
 import in.tech_camp.pictweet.repository.TweetRepository;
 
-
 @ActiveProfiles("test")
 @SpringBootTest(classes = PictweetApplication.class)
 @AutoConfigureMockMvc
-public class TweetEditIntegrationTest {
-  private UserForm userForm1;
+public class TweetDeleteIntegrationTest {
+    private UserForm userForm1;
   private UserEntity userEntity1;
 
   private UserForm userForm2;
@@ -97,11 +96,11 @@ public class TweetEditIntegrationTest {
     tweetRepository.insert(tweetEntity2);
   }
 
-  @Nested
-  class ツイート編集ができるとき {
+    @Nested
+  class ツイート削除ができるとき {
     @Test
-    public void ログインしたユーザーは自分が投稿したツイートの編集ができる() throws Exception {
-      //1人目のユーザーでログインする
+    public void ログインしたユーザーは自らが投稿したツイートの削除ができる() throws Exception {
+      // ツイート1を投稿したユーザーでログインする
       MvcResult loginResult = mockMvc.perform(post("/login")
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
           .param("email", userForm1.getEmail())
@@ -112,95 +111,83 @@ public class TweetEditIntegrationTest {
       MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
       assertNotNull(session);
 
-      // ツイートに「編集」へのリンクがあることを確認する
-      MvcResult pageResult = mockMvc.perform(get("/").session(session)) // トップページを再度取得
+      // ツイート1に「削除」へのリンクがあることを確認する
+      MvcResult pageResult = mockMvc.perform(get("/").session(session))
           .andReturn();
-      String pageContent = pageResult.getResponse().getContentAsString();
-      Document document = Jsoup.parse(pageContent);
-      Element editedTweetElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNotNull(editedTweetElement); // 編集リンクが存在することを確認
-      assertEquals("編集", editedTweetElement.text());
+      String topPageContent = pageResult.getResponse().getContentAsString();
+      Document topPageDocument = Jsoup.parse(topPageContent);
+      Element deleteMenuElement = topPageDocument.selectFirst("form[action='/tweets/" + tweetEntity1.getId() + "/delete']");
+      assertNotNull(deleteMenuElement);
+      Element deleteButtonElement = deleteMenuElement.selectFirst("input[type='submit']");
+      assertNotNull(deleteButtonElement);
+      assertEquals("削除", deleteButtonElement.val());
 
-      // 編集ページへ遷移し、すでに投稿済みの内容がフォームに入っていることを確認する
-      mockMvc.perform(get("/tweets/{tweetId}/edit" ,tweetEntity1.getId()).session(session))
-          .andExpect(status().isOk())
-          .andExpect(view().name("tweets/edit"))
-          .andExpect(content().string(containsString(tweetForm1.getText())));
+      List<TweetEntity> tweetsBeforeDeletion = tweetRepository.findAll();
+      Integer initialCount = tweetsBeforeDeletion.size();
 
-      List<TweetEntity> tweetBeforeDeletion = tweetRepository.findAll();
-      Integer initialCount = tweetBeforeDeletion.size();
-
-      // 投稿内容を編集する
-      mockMvc.perform(post("/tweets/{tweetId}/update" ,tweetEntity1.getId()).session(session)
-          .param("text", tweetForm1.getText() + "編集したテキスト")
-          .param("image", tweetForm1.getImage() + "編集した画像URL")
+      // 投稿を削除する
+      mockMvc.perform(post("/tweets/{tweetId}/delete",tweetEntity1.getId()).session(session)
           .with(csrf()))
           .andExpect(status().isFound())
           .andExpect(redirectedUrl("/"));
 
-      // tweetsテーブルのレコードの数が変わらないことの確認
+      // 投稿を削除するとレコードの数が1減ることを確認する
       List<TweetEntity> tweetAfterDeletion = tweetRepository.findAll();
       Integer afterCount = tweetAfterDeletion.size();
-      assertEquals(initialCount, afterCount);
+      assertEquals(initialCount - 1, afterCount);
 
-      // トップページには先ほど変更した内容のツイートが存在することを確認する（画像）
-      MvcResult pageResultAfterEdit = mockMvc.perform(get("/"))
+      // トップページにはツイート1の内容が存在しないことを確認する（画像）
+      MvcResult pageResultAfterDelete = mockMvc.perform(get("/"))
           .andReturn();
+      String pageContentAfterDelete = pageResultAfterDelete.getResponse().getContentAsString();
+      Document documentAfterDelete = Jsoup.parse(pageContentAfterDelete);
+      Element divElement = documentAfterDelete.selectFirst(".content_post[style='background-image: url(" + tweetForm1.getImage() + ");']");
+      assertNull(divElement);
 
-      String contentAfterEdit = pageResultAfterEdit.getResponse().getContentAsString();
-      Document documentAfterEdit = Jsoup.parse(contentAfterEdit);
-      Element divElement = documentAfterEdit.selectFirst(".content_post[style='background-image: url(" + tweetForm1.getImage() + "編集した画像URL" + ");']");
-      assertNotNull(divElement);
-
-      // トップページには先ほど変更した内容のツイートが存在することを確認する（テキスト）
-      mockMvc.perform(get("/")) // 再度ツイートを確認
-          .andExpect(content().string(containsString(tweetForm1.getText() + "編集したテキスト")));
+      // トップページにはツイート1の内容が存在しないことを確認する（テキスト）
+      mockMvc.perform(get("/"))
+          .andExpect(content().string(not(containsString(tweetEntity1.getText()))));
     }
   }
 
   @Nested
-  class ツイート編集ができないとき {
+  class ツイート削除ができないとき {
     @Test
-    public void ログインしたユーザーは自分以外が投稿したツイートの編集画面には遷移できない() throws Exception {
-      //別のユーザーでログインする
+    public void ログインしたユーザーは自分以外が投稿したツイートの削除ができない() throws Exception {
+      // ツイート1を投稿したユーザーでログインする
       MvcResult loginResult = mockMvc.perform(post("/login")
-      .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-      .param("email", userForm2.getEmail())
-      .param("password", userForm2.getPassword())
-      .with(csrf()))
-      .andExpect(status().isFound())
-      .andExpect(redirectedUrl("/"))
-      .andReturn();
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .param("email", userForm1.getEmail())
+          .param("password", userForm1.getPassword())
+          .with(csrf()))
+          .andReturn();
 
       MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
       assertNotNull(session);
 
-      // ツイート2に「編集」へのリンクがないことを確認する
-      MvcResult pageResult = mockMvc.perform(get("/").session(session)) // トップページを再度取得
+      // ツイート2に「削除」へのリンクがないことを確認する
+      MvcResult pageResult = mockMvc.perform(get("/").session(session))
           .andReturn();
       String pageContent = pageResult.getResponse().getContentAsString();
       Document document = Jsoup.parse(pageContent);
-      Element editedTweetElement = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(editedTweetElement); // 編集リンクが存在することを確認
+      Element deleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity2.getId() + "/delete']");
+      assertNull(deleteMenuElement);
     }
 
     @Test
-    public void ログインしていないとツイートの編集画面には遷移できない() throws Exception {
+    public void ログインしていないとツイートの削除ができない() throws Exception {
       // ログインせずにトップページにアクセス
-      MvcResult pageResult = mockMvc.perform(get("/")) // トップページを再度取得
-          .andReturn();
-
-      // ツイート1に「編集」へのリンクがないことを確認する
+      MvcResult pageResult = mockMvc.perform(get("/"))
+      .andReturn();
       String pageContent = pageResult.getResponse().getContentAsString();
       Document document = Jsoup.parse(pageContent);
 
-      Element Tweet1Element = document.selectFirst("a[href='/tweets/" + tweetEntity1.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(Tweet1Element); // 編集リンクが存在することを確認
-
-      // ツイート2に「編集」へのリンクがないことを確認する
-      Element Tweet2Element = document.selectFirst("a[href='/tweets/" + tweetEntity2.getId() + "/edit']"); // 編集リンクをCSSセレクタで取得
-      assertNull(Tweet2Element); // 編集リンクが存在することを確認
-
+      // ツイート1に「削除」へのリンクがないことを確認する
+      Element tweet1DeleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity1.getId() + "/delete']");
+      assertNull(tweet1DeleteMenuElement);
+      // ツイート2に「削除」へのリンクがないことを確認する
+      Element tweet2DeleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity2.getId() + "/delete']");
+      assertNull(tweet2DeleteMenuElement);
     }
   }
 

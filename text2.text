@@ -1,0 +1,50 @@
+（省略）
+
+@ActiveProfiles("test")
+@SpringBootTest(classes = PictweetApplication.class)
+@AutoConfigureMockMvc
+public class TweetDeleteIntegrationTest {
+
+（省略）
+
+  @Nested
+  class ツイート削除ができないとき {
+    @Test
+    public void ログインしたユーザーは自分以外が投稿したツイートの削除ができない() throws Exception {
+      // ツイート1を投稿したユーザーでログインする
+      MvcResult loginResult = mockMvc.perform(post("/login")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .param("email", userForm1.getEmail())
+          .param("password", userForm1.getPassword())
+          .with(csrf()))
+          .andReturn();
+
+      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
+      assertNotNull(session);
+
+      // ツイート2に「削除」へのリンクがないことを確認する
+      MvcResult pageResult = mockMvc.perform(get("/").session(session))
+          .andReturn();
+      String pageContent = pageResult.getResponse().getContentAsString();
+      Document document = Jsoup.parse(pageContent);
+      Element deleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity2.getId() + "/delete']");
+      assertNull(deleteMenuElement);
+    }
+
+    @Test
+    public void ログインしていないとツイートの削除ができない() throws Exception {
+      // ログインせずにトップページにアクセス
+      MvcResult pageResult = mockMvc.perform(get("/"))
+      .andReturn();
+      String pageContent = pageResult.getResponse().getContentAsString();
+      Document document = Jsoup.parse(pageContent);
+
+      // ツイート1に「削除」へのリンクがないことを確認する
+      Element tweet1DeleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity1.getId() + "/delete']");
+      assertNull(tweet1DeleteMenuElement);
+      // ツイート2に「削除」へのリンクがないことを確認する
+      Element tweet2DeleteMenuElement = document.selectFirst("form[action='/tweets/" + tweetEntity2.getId() + "/delete']");
+      assertNull(tweet2DeleteMenuElement);
+    }
+  }
+}

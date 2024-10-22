@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Many;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.One;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
@@ -28,6 +29,7 @@ public interface TweetRepository {
   List<TweetEntity> findAll();
 
   @Insert("INSERT INTO tweets (text, image, user_id) VALUES (#{text}, #{image}, #{user.id})")
+  @Options(useGeneratedKeys = true, keyProperty = "id")
   void insert(TweetEntity tweet);
 
   @Delete("DELETE FROM tweets WHERE id = #{id}")
