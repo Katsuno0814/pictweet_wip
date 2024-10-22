@@ -65,7 +65,7 @@ public class TweetControllerUnitTest {
         when(tweetRepository.findAll()).thenReturn(expectedTweetList);
 
         tweetController.showIndex(model);
-        assertThat(model.getAttribute("tweetList"), is(expectedTweetList));
+        assertThat(model.getAttribute("tweets"), is(expectedTweetList));
     }
 
     @Test
