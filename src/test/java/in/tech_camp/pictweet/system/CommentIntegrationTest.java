@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
-import in.tech_camp.pictweet.PicTweetApplication;
+import in.tech_camp.pictweet.PictweetApplication;
 import in.tech_camp.pictweet.entity.CommentEntity;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.entity.UserEntity;
@@ -35,7 +35,7 @@ import static in.tech_camp.pictweet.support.LoginSupport.login;
 import jakarta.servlet.http.HttpSession;
 
 @ActiveProfiles("test")
-@SpringBootTest(classes = PicTweetApplication.class)
+@SpringBootTest(classes = PictweetApplication.class)
 @AutoConfigureMockMvc
 public class CommentIntegrationTest {
   private UserForm userForm;

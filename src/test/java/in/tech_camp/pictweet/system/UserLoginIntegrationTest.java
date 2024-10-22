@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-import in.tech_camp.pictweet.PicTweetApplication;
+import in.tech_camp.pictweet.PictweetApplication;
 import in.tech_camp.pictweet.entity.UserEntity;
 import in.tech_camp.pictweet.factory.UserFormFactory;
 import in.tech_camp.pictweet.form.UserForm;
@@ -27,7 +27,7 @@ import in.tech_camp.pictweet.service.UserService;
 import jakarta.servlet.http.HttpSession;
 
 @ActiveProfiles("test")
-@SpringBootTest(classes = PicTweetApplication.class)
+@SpringBootTest(classes = PictweetApplication.class)
 @AutoConfigureMockMvc
 public class UserLoginIntegrationTest {
   @Autowired
