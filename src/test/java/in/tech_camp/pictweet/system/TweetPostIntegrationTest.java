@@ -38,6 +38,7 @@ import in.tech_camp.pictweet.factory.TweetFormFactory;
 import in.tech_camp.pictweet.form.UserForm;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.service.UserService;
+import static in.tech_camp.pictweet.support.LoginSupport.login;
 import in.tech_camp.pictweet.repository.TweetRepository;
 
 @ActiveProfiles("test")
@@ -47,7 +48,7 @@ public class TweetPostIntegrationTest {
 
   private UserForm userForm;
   private UserEntity userEntity;
-  
+
   private TweetForm tweetForm;
 
   @Autowired
@@ -76,20 +77,13 @@ public class TweetPostIntegrationTest {
     @Test
     public void ログインしたユーザーは新規投稿できる() throws Exception {
       // ログインする
-      MvcResult loginResult = mockMvc.perform(post("/login")
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .param("email", userEntity.getEmail())
-            .param("password", userEntity.getPassword())
-            .with(csrf()))
-            .andReturn();
-
-      MockHttpSession session  = (MockHttpSession)loginResult.getRequest().getSession();
+      MockHttpSession session = login(mockMvc, userForm);
       assertNotNull(session);
 
       // 新規投稿ページへのボタンがあることを確認する
       mockMvc.perform(get("/").session(session))
           .andExpect(status().isOk())
-          .andExpect(content().string(containsString("投稿する"))); 
+          .andExpect(content().string(containsString("投稿する")));
 
       // 投稿ページに移動する
       mockMvc.perform(get("/tweets/new").session(session))
@@ -120,11 +114,11 @@ public class TweetPostIntegrationTest {
       Document document = Jsoup.parse(content);
       Element divElement = document.selectFirst(".content_post[style='background-image: url(" + tweetForm.getImage() + ");']");
       assertNotNull(divElement);
-      
+
       // トップページには先ほど投稿した内容のツイートが存在することを確認する（テキスト）
       mockMvc.perform(get("/"))
           .andExpect(status().isOk())
-          .andExpect(content().string(containsString(tweetForm.getText())));    
+          .andExpect(content().string(containsString(tweetForm.getText())));
     }
   }
 
