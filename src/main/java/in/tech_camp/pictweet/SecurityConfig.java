@@ -12,11 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.server.csrf.CsrfToken;
 
 import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 @Configuration
 @EnableWebSecurity
@@ -58,7 +56,6 @@ public class SecurityConfig {
                             "{\"error\":\"Invalid credentials\"}"
                         );
                     })
-                    // .failureHandler(new SimpleUrlAuthenticationFailureHandler())
                 )
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
@@ -83,39 +80,14 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
     return (request, response, authentication) -> {
-        // CSRFトークンを取得してログに出力
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            CsrfToken csrfToken = (CsrfToken) session.getAttribute(CsrfToken.class.getName());
-            if (csrfToken != null) {
-                System.out.println("トークンの値：");
-                System.out.println(csrfToken.getToken());
-            } else {
-                System.out.println("No CSRF Token found in session");
-            }
-        } else {
-            System.out.println("No session found");
-        }
         // ユーザー情報を含むJSONレスポンスを返す
         CustomUserDetail userDetails = (CustomUserDetail) authentication.getPrincipal();
-
-        // String secretKey = System.getenv("JWT_SECRET_KEY");
-
-        // // トークンを作成
-        // String token = Jwts.builder()
-        // .setSubject(userDetails.getUsername())
-        // .setIssuedAt(new Date())
-        // .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1日後に期限切れ
-        // .signWith(SignatureAlgorithm.HS256, secretKey)
-        // .compact();
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(String.format(
-            // "{\"token\":\"%s\", \"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}",
             "{\"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}",
-            // token,
             userDetails.getId(),
             userDetails.getNickname(),
             userDetails.getUsername()
