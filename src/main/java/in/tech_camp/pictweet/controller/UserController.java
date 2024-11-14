@@ -64,13 +64,6 @@ public class UserController {
       }
   }
 
-  // @PostMapping("/login")
-  // public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-  //     // ユーザー認証ロジック
-  //     String jwt = jwtUtil.generateToken(userDetails);
-  //     return ResponseEntity.ok(new JwtResponse(jwt));
-  // }
-
   @GetMapping("/users/{userId}")
   public String showMypage(@PathVariable("userId") Integer userId, Model model) {
     UserEntity user = userRepository.findById(userId);
