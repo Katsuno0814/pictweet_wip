@@ -1,5 +1,7 @@
 package in.tech_camp.pictweet;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,6 +11,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.server.csrf.CsrfToken;
+
+import in.tech_camp.pictweet.costom_user.CustomUserDetail;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @Configuration
 @EnableWebSecurity
@@ -18,33 +26,52 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors
+                    .configurationSource(request -> {
+                        var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+                        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                        corsConfiguration.setAllowCredentials(true);
+                        corsConfiguration.setAllowedHeaders(List.of("*"));
+                        return corsConfiguration;
+                    })
+                )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         //ここに記述されたGETリクエストは許可されます（ログイン不要です)
                         .requestMatchers("/css/**", "/images/**", "/", "/users/sign_up", "/users/login", "/tweets/{id:[0-9]+}","/users/{id:[0-9]+}","/tweets/search","/error").permitAll()
                         //ここに記述されたPOSTリクエストは許可されます(ログイン不要です)
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers("/api/login", "/api/user", "/api/logout", "/api/tweets/**").permitAll()
                         .anyRequest().authenticated())
                         //上記以外のリクエストは認証されたユーザーのみ許可されます(要ログイン)
 
-                .formLogin(login -> login
-                        .loginProcessingUrl("/login")
-                        //ログインフォームでログインボタンを押した際のパスを設定しています
-                        .loginPage("/users/login")
-                        //ログインフォームのパスを設定しています
-                        .defaultSuccessUrl("/", true)
-                        //ログイン成功後のリダイレクト先です
-                        .failureUrl("/login?error")
-                        //ログイン失敗後のリダイレクト先です
-                        .usernameParameter("email")
-                        //ログイン時にusernameとして扱うパラメーターを指定します
-                        .permitAll())
 
+                .formLogin(form -> form
+                    .loginProcessingUrl("/api/login")
+                    .usernameParameter("email")
+                    .successHandler(authenticationSuccessHandler())
+                    .failureHandler((request, response, exception) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write(
+                            "{\"error\":\"Invalid credentials\"}"
+                        );
+                    })
+                    // .failureHandler(new SimpleUrlAuthenticationFailureHandler())
+                )
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
+                        .logoutUrl("/api/logout")
                         //ログアウトボタンを押した際のパスを設定しています
-                        .logoutSuccessUrl("/"));
-                        //ログアウト成功時のリダイレクト先です
-                        
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            // ここでログアウト成功時の処理を行います。
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"success\":true}");
+                            response.getWriter().flush();
+                        })
+                );
+
         return http.build();
     }
 
@@ -52,4 +79,49 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+    return (request, response, authentication) -> {
+        // CSRFトークンを取得してログに出力
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            CsrfToken csrfToken = (CsrfToken) session.getAttribute(CsrfToken.class.getName());
+            if (csrfToken != null) {
+                System.out.println("トークンの値：");
+                System.out.println(csrfToken.getToken());
+            } else {
+                System.out.println("No CSRF Token found in session");
+            }
+        } else {
+            System.out.println("No session found");
+        }
+        // ユーザー情報を含むJSONレスポンスを返す
+        CustomUserDetail userDetails = (CustomUserDetail) authentication.getPrincipal();
+
+        // String secretKey = System.getenv("JWT_SECRET_KEY");
+
+        // // トークンを作成
+        // String token = Jwts.builder()
+        // .setSubject(userDetails.getUsername())
+        // .setIssuedAt(new Date())
+        // .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1日後に期限切れ
+        // .signWith(SignatureAlgorithm.HS256, secretKey)
+        // .compact();
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(String.format(
+            // "{\"token\":\"%s\", \"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}",
+            "{\"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}",
+            // token,
+            userDetails.getId(),
+            userDetails.getNickname(),
+            userDetails.getUsername()
+        ));
+        response.getWriter().flush();
+    };
+}
+
 }
