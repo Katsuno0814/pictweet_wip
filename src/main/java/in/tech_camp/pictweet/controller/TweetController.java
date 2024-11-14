@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.entity.UserEntity;
-import in.tech_camp.pictweet.form.CommentForm;
 import in.tech_camp.pictweet.form.SearchForm;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.repository.TweetRepository;
@@ -74,14 +73,14 @@ public class TweetController {
         UserEntity userDetails = tweet.getUser();
 
         String jsonResponse = String.format(
-            "{\"id\":%d,\"text\":\"%s\",\"image\":\"%s\",\"user.id\": \"%d\",\"user.nickname\":\"%s\",\"user.email\":\"%s\"}",
-            tweet.getId(),
-            tweet.getText(),
-            tweet.getImage(),
-            userDetails.getId(),
-            userDetails.getNickname(),
-            userDetails.getEmail()
-        );
+          "{\"id\":%d,\"text\":\"%s\",\"image\":\"%s\",\"user\":{\"id\": \"%d\",\"nickname\":\"%s\",\"email\":\"%s\"}}",
+          tweet.getId(),
+          tweet.getText(),
+          tweet.getImage(),
+          userDetails.getId(),
+          userDetails.getNickname(),
+          userDetails.getEmail()
+      );
         return ResponseEntity.ok(jsonResponse); // 成功時は保存したツイート情報を返却
         // return ResponseEntity.ok().build(); // 成功時はHTTP 200を返却
       } catch (Exception e) {
@@ -145,14 +144,24 @@ public class TweetController {
     return "redirect:/";
   }
 
-  @GetMapping("/tweets/{tweetId}")
-  public String showTweetDetail(@PathVariable("tweetId") Integer tweetId, Model model) {
-      TweetEntity tweet = tweetRepository.findById(tweetId);
-      CommentForm commentForm = new CommentForm();
-      model.addAttribute("tweet", tweet);
-      model.addAttribute("commentForm", commentForm);
-      model.addAttribute("comments",tweet.getComments());
-      return "tweets/detail";
+  @GetMapping("/{tweetId}")
+  public ResponseEntity<String> showTweetDetail(@PathVariable("tweetId") Integer tweetId) {
+       TweetEntity tweet = tweetRepository.findById(tweetId);
+      if (tweet == null) {
+          return ResponseEntity.notFound().build();
+      }
+      UserEntity userDetails = tweet.getUser();
+        // .を使用するとJSONの仕様に合わずフロント側で値を取得できない
+        String jsonResponse = String.format(
+          "{\"id\":%d,\"text\":\"%s\",\"image\":\"%s\",\"user\":{\"id\": \"%d\",\"nickname\":\"%s\",\"email\":\"%s\"}}",
+          tweet.getId(),
+          tweet.getText(),
+          tweet.getImage(),
+          userDetails.getId(),
+          userDetails.getNickname(),
+          userDetails.getEmail()
+      );
+      return ResponseEntity.ok(jsonResponse);
   }
 
   @GetMapping("/tweets/search")
