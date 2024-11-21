@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
-import in.tech_camp.pictweet.entity.UserEntity;
 import in.tech_camp.pictweet.form.SearchForm;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.repository.TweetRepository;
@@ -40,9 +39,7 @@ public class TweetController {
   @GetMapping("/")
   public List<TweetEntity> showIndex(Model model) {
         List<TweetEntity> tweets = tweetRepository.findAll();
-        // SearchForm searchForm = new SearchForm();
-        // model.addAttribute("tweets", tweets);
-        // model.addAttribute("searchForm", searchForm);
+
         return tweets;
   }
 
@@ -68,20 +65,6 @@ public class TweetController {
 
       try {
         tweetRepository.insert(tweet);
-
-        // ユーザー情報を取得
-        UserEntity userDetails = tweet.getUser();
-
-        String jsonResponse = String.format(
-          "{\"id\":%d,\"text\":\"%s\",\"image\":\"%s\",\"user\":{\"id\": \"%d\",\"nickname\":\"%s\",\"email\":\"%s\"}}",
-          tweet.getId(),
-          tweet.getText(),
-          tweet.getImage(),
-          userDetails.getId(),
-          userDetails.getNickname(),
-          userDetails.getEmail()
-      );
-        // return ResponseEntity.ok(jsonResponse); // 成功時は保存したツイート情報を返却
         return ResponseEntity.ok().build(); // 成功時はHTTP 200を返却
       } catch (Exception e) {
           System.out.println("エラー：" + e);
@@ -147,37 +130,6 @@ public class TweetController {
 
     return ResponseEntity.ok(tweet); // TweetEntityを返す
 }
-  // public ResponseEntity<String> showTweetDetail(@PathVariable("tweetId") Integer tweetId) {
-  //     TweetEntity tweet = tweetRepository.findById(tweetId);
-
-  //     if (tweet == null) {
-  //         return ResponseEntity.notFound().build(); // ツイートが見つからない場合
-  //     }
-
-  //     UserEntity userDetails = tweet.getUser();
-  //     ObjectMapper objectMapper = new ObjectMapper();
-
-  //   try {
-  //       // JSONレスポンスを構築 (ObjectMapperでエスケープ)
-  //       String jsonResponse = String.format(
-  //           "{\"id\":%d,\"text\":%s,\"image\":\"%s\",\"user\":{\"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}}",
-  //           tweet.getId(),
-  //           // 文字列に改行があるとResponseEntityでレスポンス時<EOL>というタグに変換されエラーになるためエスケープする
-  //           objectMapper.writeValueAsString(tweet.getText()),
-  //           tweet.getImage(),
-  //           userDetails.getId(),
-  //           userDetails.getNickname(),
-  //           userDetails.getEmail(),
-  //           tweet.getComments()
-  //       );
-
-  //       return ResponseEntity.ok().body(jsonResponse);
-  //   } catch (JsonProcessingException e) {
-  //       e.printStackTrace();
-  //       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"JSON処理中にエラーが発生しました。\"}");
-  //   }
-  // }
-
 
   @GetMapping("/tweets/search")
   public String searchTweets(@ModelAttribute("searchForm") SearchForm searchForm, Model model) {

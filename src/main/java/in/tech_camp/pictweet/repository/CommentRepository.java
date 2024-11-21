@@ -18,8 +18,6 @@ public interface CommentRepository {
     @Results(value = {
       @Result(property = "user.id", column = "user_id"),
       @Result(property = "user.nickname", column = "user_nickname")
-//       @Result(property = "tweet", column = "tweet_id",
-//               one = @One(select = "in.tech_camp.pictweet.repository.TweetRepository.findById"))
     })
     List<CommentEntity> findByTweetId(Integer tweetId);
 
