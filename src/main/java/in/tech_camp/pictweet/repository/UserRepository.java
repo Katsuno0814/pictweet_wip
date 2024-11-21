@@ -26,14 +26,17 @@ public interface UserRepository {
 
   @Select("SELECT * FROM users WHERE id = #{id}")
   @Results(value = {
-    @Result(property = "id", column = "id"), 
-    @Result(property = "tweets", column = "id", 
+    @Result(property = "id", column = "id"),
+    @Result(property = "tweets", column = "id",
             many = @Many(select = "in.tech_camp.pictweet.repository.TweetRepository.findByUserId")),
-    @Result(property = "comments", column = "id", 
+    @Result(property = "comments", column = "id",
             many = @Many(select = "in.tech_camp.pictweet.repository.CommentRepository.findByUserId"))
   })
   UserEntity findById(Integer id);
 
   @Select("SELECT * FROM users")
   List<UserEntity> findAll();
+
+  @Select("SELECT * FROM users WHERE id = #{id}")
+  UserEntity findUserById(Integer id);
 }

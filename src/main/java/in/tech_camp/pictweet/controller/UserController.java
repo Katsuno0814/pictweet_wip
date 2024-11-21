@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.entity.UserEntity;
 import in.tech_camp.pictweet.form.UserForm;
+import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
+import in.tech_camp.pictweet.response.UserDTO;
+import in.tech_camp.pictweet.response.UserTweetsDTO;
 import in.tech_camp.pictweet.service.UserService;
 import in.tech_camp.pictweet.validation.ValidationOrder;
 import lombok.AllArgsConstructor;
@@ -30,6 +32,7 @@ import lombok.AllArgsConstructor;
 public class UserController {
 
   private final UserRepository userRepository;
+  private final TweetRepository tweetRepository;
 
   private final UserService userService;
 
@@ -65,12 +68,14 @@ public class UserController {
   }
 
   @GetMapping("/users/{userId}")
-  public String showMypage(@PathVariable("userId") Integer userId, Model model) {
+  public ResponseEntity<UserTweetsDTO> showMypage(@PathVariable("userId") Integer userId) {
     UserEntity user = userRepository.findById(userId);
+    UserDTO userDto = new UserDTO(user.getId(), user.getNickname());
+
     List<TweetEntity> tweets = user.getTweets();
 
-    model.addAttribute("nickname", user.getNickname());
-    model.addAttribute("tweets", tweets);
-    return "users/detail";
+    UserTweetsDTO response = new UserTweetsDTO(userDto, tweets);
+
+    return ResponseEntity.ok(response);
   }
 }
