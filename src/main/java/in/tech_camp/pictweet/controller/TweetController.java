@@ -52,7 +52,7 @@ public class TweetController {
     return "tweets/new";
   }
 
-  @PostMapping("/tweets")
+  @PostMapping("/")
   public ResponseEntity<?> createTweet(@RequestBody @Validated(ValidationOrder.class) TweetForm tweetForm, BindingResult result, @AuthenticationPrincipal CustomUserDetail currentUser) {
       if (result.hasErrors()) {
         List<String> errorMessages = result.getAllErrors().stream()
@@ -81,23 +81,23 @@ public class TweetController {
           userDetails.getNickname(),
           userDetails.getEmail()
       );
-        return ResponseEntity.ok(jsonResponse); // 成功時は保存したツイート情報を返却
-        // return ResponseEntity.ok().build(); // 成功時はHTTP 200を返却
+        // return ResponseEntity.ok(jsonResponse); // 成功時は保存したツイート情報を返却
+        return ResponseEntity.ok().build(); // 成功時はHTTP 200を返却
       } catch (Exception e) {
           System.out.println("エラー：" + e);
           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ツイートの作成に失敗しました");
       }
   }
 
-  @PostMapping("/tweets/{tweetId}/delete")
-  public String deleteTweet(@PathVariable("tweetId") Integer tweetId) {
+  @PostMapping("/{tweetId}/delete")
+  public ResponseEntity<Void> deleteTweet(@PathVariable("tweetId") Integer tweetId) {
     try {
-      tweetRepository.deleteById(tweetId);
+        tweetRepository.deleteById(tweetId);
+        return ResponseEntity.noContent().build();
     } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return "redirect:/";
+        System.out.println("エラー：" + e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
-    return "redirect:/";
   }
 
   @GetMapping("/tweets/{tweetId}/edit")
@@ -113,22 +113,16 @@ public class TweetController {
     return "tweets/edit";
   }
 
-  @PostMapping("/tweets/{tweetId}/update")
-  public String updateTweet(@ModelAttribute("tweetForm") @Validated TweetForm tweetForm,
-                            BindingResult result,
-                            @PathVariable("tweetId") Integer tweetId,
-                            Model model) {
+  @PostMapping("/{tweetId}/update")
+  public ResponseEntity<?> updateTweet(@RequestBody @Validated(ValidationOrder.class) TweetForm tweetForm, BindingResult result, @PathVariable("tweetId") Integer tweetId) {
 
     if (result.hasErrors()) {
       List<String> errorMessages = result.getAllErrors().stream()
-              .map(DefaultMessageSourceResolvable::getDefaultMessage)
-              .collect(Collectors.toList());
-      model.addAttribute("errorMessages", errorMessages);
-
-      model.addAttribute("tweetForm", tweetForm);
-      model.addAttribute("tweetId", tweetId);
-      return "tweets/edit";
+      .map(DefaultMessageSourceResolvable::getDefaultMessage)
+      .collect(Collectors.toList());
+      return ResponseEntity.badRequest().body(Collections.singletonMap("errorMessages", errorMessages));
     }
+
 
     TweetEntity tweet = tweetRepository.findById(tweetId);
     tweet.setText(tweetForm.getText());
@@ -136,33 +130,54 @@ public class TweetController {
 
     try {
       tweetRepository.update(tweet);
+      return ResponseEntity.ok().build();
     } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return "redirect:/";
+        System.out.println("エラー：" + e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ツイートの更新に失敗しました");
     }
-
-    return "redirect:/";
   }
 
   @GetMapping("/{tweetId}")
-  public ResponseEntity<String> showTweetDetail(@PathVariable("tweetId") Integer tweetId) {
-       TweetEntity tweet = tweetRepository.findById(tweetId);
-      if (tweet == null) {
-          return ResponseEntity.notFound().build();
-      }
-      UserEntity userDetails = tweet.getUser();
-        // .を使用するとJSONの仕様に合わずフロント側で値を取得できない
-        String jsonResponse = String.format(
-          "{\"id\":%d,\"text\":\"%s\",\"image\":\"%s\",\"user\":{\"id\": \"%d\",\"nickname\":\"%s\",\"email\":\"%s\"}}",
-          tweet.getId(),
-          tweet.getText(),
-          tweet.getImage(),
-          userDetails.getId(),
-          userDetails.getNickname(),
-          userDetails.getEmail()
-      );
-      return ResponseEntity.ok(jsonResponse);
-  }
+  public ResponseEntity<TweetEntity> showTweetDetail(@PathVariable("tweetId") Integer tweetId) {
+    TweetEntity tweet = tweetRepository.findById(tweetId);
+
+    if (tweet == null) {
+        return ResponseEntity.notFound().build();
+    }
+
+    return ResponseEntity.ok(tweet); // TweetEntityを返す
+}
+  // public ResponseEntity<String> showTweetDetail(@PathVariable("tweetId") Integer tweetId) {
+  //     TweetEntity tweet = tweetRepository.findById(tweetId);
+
+  //     if (tweet == null) {
+  //         return ResponseEntity.notFound().build(); // ツイートが見つからない場合
+  //     }
+
+  //     UserEntity userDetails = tweet.getUser();
+  //     ObjectMapper objectMapper = new ObjectMapper();
+
+  //   try {
+  //       // JSONレスポンスを構築 (ObjectMapperでエスケープ)
+  //       String jsonResponse = String.format(
+  //           "{\"id\":%d,\"text\":%s,\"image\":\"%s\",\"user\":{\"id\":%d,\"nickname\":\"%s\",\"email\":\"%s\"}}",
+  //           tweet.getId(),
+  //           // 文字列に改行があるとResponseEntityでレスポンス時<EOL>というタグに変換されエラーになるためエスケープする
+  //           objectMapper.writeValueAsString(tweet.getText()),
+  //           tweet.getImage(),
+  //           userDetails.getId(),
+  //           userDetails.getNickname(),
+  //           userDetails.getEmail(),
+  //           tweet.getComments()
+  //       );
+
+  //       return ResponseEntity.ok().body(jsonResponse);
+  //   } catch (JsonProcessingException e) {
+  //       e.printStackTrace();
+  //       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"JSON処理中にエラーが発生しました。\"}");
+  //   }
+  // }
+
 
   @GetMapping("/tweets/search")
   public String searchTweets(@ModelAttribute("searchForm") SearchForm searchForm, Model model) {
