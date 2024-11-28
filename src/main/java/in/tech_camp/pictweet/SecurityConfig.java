@@ -39,10 +39,14 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/images/**", "/", "/users/sign_up", "/users/login", "/tweets/{id:[0-9]+}","/users/{id:[0-9]+}","/tweets/search","/error").permitAll()
                         //ここに記述されたPOSTリクエストは許可されます(ログイン不要です)
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                        .requestMatchers("/api/login", "/api/user", "/api/logout", "/api/tweets/**","/api/users/{id:[0-9]+}","/api/tweets/{id:[0-9]+}/comment").permitAll()
+                        .requestMatchers("/api/check-session", "/api/login", "/api/user", "/api/logout", "/api/tweets/", "/api/tweets/{id:[0-9]+}","/api/users/{id:[0-9]+}").permitAll()
                         .anyRequest().authenticated())
                         //上記以外のリクエストは認証されたユーザーのみ許可されます(要ログイン)
-
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendRedirect("http://localhost:3000/users/login");
+                        })
+                )
 
                 .formLogin(form -> form
                     .loginProcessingUrl("/api/login")

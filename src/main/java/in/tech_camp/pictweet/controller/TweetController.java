@@ -23,6 +23,7 @@ import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.form.SearchForm;
 import in.tech_camp.pictweet.form.TweetForm;
+import in.tech_camp.pictweet.repository.CommentRepository;
 import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
 import in.tech_camp.pictweet.validation.ValidationOrder;
@@ -33,7 +34,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TweetController {
   private final TweetRepository tweetRepository;
-
+  private final CommentRepository commentRepository;
   private final UserRepository userRepository;
 
   @GetMapping("/")
@@ -73,8 +74,9 @@ public class TweetController {
   }
 
   @PostMapping("/{tweetId}/delete")
-  public ResponseEntity<Void> deleteTweet(@PathVariable("tweetId") Integer tweetId) {
+  public ResponseEntity<?> deleteTweet(@PathVariable("tweetId") Integer tweetId) {
     try {
+        commentRepository.deleteCommentsByTweetId(tweetId);
         tweetRepository.deleteById(tweetId);
         return ResponseEntity.noContent().build();
     } catch (Exception e) {

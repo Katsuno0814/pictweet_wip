@@ -2,6 +2,7 @@ package in.tech_camp.pictweet.repository;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.One;
@@ -33,4 +34,7 @@ public interface CommentRepository {
    @Insert("INSERT INTO comments (text, user_id, tweet_id) VALUES (#{text}, #{user.id}, #{tweet.id}) RETURNING id")
    @Options(useGeneratedKeys = true, keyProperty = "id")
    void insert(CommentEntity comment);
+
+   @Delete("DELETE FROM comments WHERE tweet_id = #{tweetId}")
+   void deleteCommentsByTweetId(Integer tweetId);
 }

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import in.tech_camp.pictweet.entity.TweetEntity;
 import in.tech_camp.pictweet.entity.UserEntity;
 import in.tech_camp.pictweet.form.UserForm;
-import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
 import in.tech_camp.pictweet.response.UserDTO;
 import in.tech_camp.pictweet.response.UserTweetsDTO;
@@ -32,7 +31,6 @@ import lombok.AllArgsConstructor;
 public class UserController {
 
   private final UserRepository userRepository;
-  private final TweetRepository tweetRepository;
 
   private final UserService userService;
 
