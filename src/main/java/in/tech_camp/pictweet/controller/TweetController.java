@@ -12,20 +12,21 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.tech_camp.pictweet.costom_user.CustomUserDetail;
 import in.tech_camp.pictweet.entity.TweetEntity;
-import in.tech_camp.pictweet.form.SearchForm;
 import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.repository.CommentRepository;
 import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
+import in.tech_camp.pictweet.response.TweetDTO;
+import in.tech_camp.pictweet.response.UserDTO;
 import in.tech_camp.pictweet.validation.ValidationOrder;
 import lombok.AllArgsConstructor;
 
@@ -133,11 +134,16 @@ public class TweetController {
     return ResponseEntity.ok(tweet); // TweetEntityを返す
 }
 
-  @GetMapping("/tweets/search")
-  public String searchTweets(@ModelAttribute("searchForm") SearchForm searchForm, Model model) {
-    List<TweetEntity> tweets = tweetRepository.findByTextContaining(searchForm.getText());
-    model.addAttribute("tweets", tweets);
-    model.addAttribute("searchForm", searchForm);
-    return "tweets/search";
+  @GetMapping("/search")
+  public List<TweetDTO> searchTweets(@RequestParam String text) {
+      List<TweetEntity> tweets = tweetRepository.findByTextContaining(text);
+          // TweetEntityからTweetDTOへの変換
+      return tweets.stream().map(tweet -> {
+          UserDTO userDto = new UserDTO(tweet.getUser().getId(), tweet.getUser().getNickname());
+          // 他のUserDTOのフィールドも必要に応じて追加
+
+          TweetDTO tweetDto = new TweetDTO(tweet.getId(), tweet.getText(), tweet.getImage(), userDto);
+          return tweetDto;
+      }).collect(Collectors.toList());
   }
 }

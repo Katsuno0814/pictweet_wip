@@ -1,5 +1,13 @@
 package in.tech_camp.pictweet.response;
 
-public class TweetDTO {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
+@Data
+@AllArgsConstructor
+public class TweetDTO {
+  private Integer id;
+  private String text;
+  private String image;
+  private  UserDTO user;
 }
