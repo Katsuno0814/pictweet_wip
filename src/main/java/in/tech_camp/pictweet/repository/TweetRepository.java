@@ -22,9 +22,7 @@ public interface TweetRepository {
   @Results(value = {
       @Result(property = "id", column = "id"),
       @Result(property = "user.id", column = "user_id"),
-      @Result(property = "user.nickname", column = "user_nickname"),
-      @Result(property = "comments", column = "id",
-              many = @Many(select = "in.tech_camp.pictweet.repository.CommentRepository.findByTweetId"))
+      @Result(property = "user.nickname", column = "user_nickname")
   })
   List<TweetEntity> findAll();
 

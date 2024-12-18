@@ -25,8 +25,6 @@ import in.tech_camp.pictweet.form.TweetForm;
 import in.tech_camp.pictweet.repository.CommentRepository;
 import in.tech_camp.pictweet.repository.TweetRepository;
 import in.tech_camp.pictweet.repository.UserRepository;
-import in.tech_camp.pictweet.response.TweetDTO;
-import in.tech_camp.pictweet.response.UserDTO;
 import in.tech_camp.pictweet.validation.ValidationOrder;
 import lombok.AllArgsConstructor;
 
@@ -135,15 +133,8 @@ public class TweetController {
 }
 
   @GetMapping("/search")
-  public List<TweetDTO> searchTweets(@RequestParam String text) {
-      List<TweetEntity> tweets = tweetRepository.findByTextContaining(text);
-          // TweetEntityからTweetDTOへの変換
-      return tweets.stream().map(tweet -> {
-          UserDTO userDto = new UserDTO(tweet.getUser().getId(), tweet.getUser().getNickname());
-          // 他のUserDTOのフィールドも必要に応じて追加
-
-          TweetDTO tweetDto = new TweetDTO(tweet.getId(), tweet.getText(), tweet.getImage(), userDto);
-          return tweetDto;
-      }).collect(Collectors.toList());
+  public ResponseEntity<List<TweetEntity>> searchTweets(@RequestParam String text) {
+    List<TweetEntity> tweets = tweetRepository.findByTextContaining(text);
+    return ResponseEntity.ok(tweets);
   }
 }
