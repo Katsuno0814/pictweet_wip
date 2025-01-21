@@ -38,7 +38,7 @@ public class TweetControllerUnitTest {
 
     @BeforeEach
     public void setUp() {
-        searchForm = new SearchForm();
+        // searchForm = new SearchForm();
         model = new ExtendedModelMap();
     }
     @Test

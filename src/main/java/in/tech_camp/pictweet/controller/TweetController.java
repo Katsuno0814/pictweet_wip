@@ -133,8 +133,8 @@ public class TweetController {
 }
 
   @GetMapping("/search")
-  public ResponseEntity<List<TweetEntity>> searchTweets(@RequestParam String text) {
-    List<TweetEntity> tweets = tweetRepository.findByTextContaining(text);
+  public ResponseEntity<List<TweetEntity>> searchTweets(@RequestParam String query) {
+    List<TweetEntity> tweets = tweetRepository.findByTextContaining(query);
     return ResponseEntity.ok(tweets);
   }
 }
